@@ -15,7 +15,6 @@ from threading import Thread
 # 3: resistor
 # 4: transistor
 
-# HOST = '155.230.25.98'
 # HOST = '127.0.0.1'
 HOST = '192.168.0.15'
 PORT = 9999

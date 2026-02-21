@@ -19,7 +19,6 @@ import detect_custom as dc
 # 4: transistor
 
 #소켓 서버 주소 불러오기
-# HOST = '155.230.25.98'
 # HOST = '127.0.0.1'
 HOST = '192.168.0.2'
 PORT = 9999
