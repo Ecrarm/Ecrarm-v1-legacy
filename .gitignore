@@ -1,47 +1,40 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.env
+venv/
+env/
+ECRARM_PY_ENV/
 
-__pycache__
-
-# dependencies
-/.pnp
+# Node.js & npm
+node_modules
+.pnp
 .pnp.js
-*.ini
-/node_modules
-node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# testing
-/coverage
+# Build files
+/build/
+/dist/
 
-# production
-/build
+# Testing
+/coverage/
 
-# misc
+# Environment & Configuration
 .DS_Store
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+*.ini
 
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-#custom
-*.ini*
-yolov7/
-traced_model.pt
-ECRARM_PY_ENV/Include
-ECRARM_PY_ENV/Lib
-ECRARM_PY_ENV/Scripts
-ECRARM_PY_ENV/share
-ECRARM_PY_ENV/pyvenv.cfg
-ECRARM_PY_ENV/bin
-ECRARM_PY_ENV/include
-ECRARM_PY_ENV/lib
-ECRARM_PY_ENV/lib64
-
-
-*.env
-Tx2/runs/detect
+# Project-specific
+Tx2/runs/detect/
 *img_captured.jpg*
-*Pipfile*
+Pipfile
+Pipfile.lock
+traced_model.pt
