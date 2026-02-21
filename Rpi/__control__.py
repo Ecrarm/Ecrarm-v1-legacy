@@ -21,7 +21,6 @@ def stepPinTimer(STEPPIN, GPIO_OUT, i):
 
 # class
 
-
 class Arm:
     # step control pins
     STEPPIN_X, DIRPIN_X, ENPIN_X = 5, 6, 13  # BOARD 29 31 33
@@ -35,7 +34,7 @@ class Arm:
 
     # step moter contorl params
     STEP_MODE = 16  # step motor mode
-    STEP_FREQ = 400  # step moter signal frequency
+    STEP_FREQ = 700  # step moter signal frequency
     PINS = [STEPPIN_X, DIRPIN_X, ENPIN_X,
             STEPPIN_Y, DIRPIN_Y, ENPIN_Y,
             STEPPIN_Z, DIRPIN_Z, ENPIN_Z,
@@ -55,10 +54,9 @@ class Arm:
 
         self.que = Queue()
         self.degree = {"X": 0, "Y": 174, "Z": -58, "W": 15, "R": 0, "S": 0}
-        self.init_degree = {"X": 0, "Y": 174,
-                            "Z": -58, "W": 15, "R": 0, "S": 0}
-        self.sort_buckets = [[90, 50, 40, 0, 0], [65, 50, 40, 0, 0], [
-            110, 50, 40, 0, 0], [-65, 50, 40, 0, 0], [-90, 50, 40, 0, 0]]
+        self.init_degree = {"X": 0, "Y": 174,"Z": -58, "W": 15, "R": 0, "S": 0}
+        self.sort_buckets = [[45, 20, 90, 30, 0], [65, 50, 40, 0, 0], [
+            110, 50, 40, 0, 0], [-65, 50, 40, 0, 0], [-45, 20, 90, 30, 0]]
         self.PCA = PCA
 
         # GPIO PIN number에 맞게 셋업 : GPIO.OUT / GPIO.IN
@@ -94,51 +92,59 @@ class Arm:
         return
 
     ## init 쓰레드 쓰지 말기
-    def _INIT_(self):  # 무슨 각도에 있든지 초기 상태로 돌리는 함수
-        theta0, theta1, theta2, theta3  = (self.init_degree.get('X')-self.degree.get('X')), \
-             (self.init_degree.get('Y')-self.degree.get('Y')), \
-                (self.init_degree.get('Z')-self.degree.get('Z')), \
-                    (self.init_degree.get('W')-self.degree.get('W'))
+    def _INIT_(self, num):  # 무슨 각도에 있든지 초기 상태로 돌리는 함수
+        if num==0 or num==2:
+            theta0, theta1, theta2, theta3  = (self.init_degree.get('X')-self.degree.get('X')), \
+                (self.init_degree.get('Y')-self.degree.get('Y')), \
+                    (self.init_degree.get('Z')-self.degree.get('Z')), \
+                        (self.init_degree.get('W')-self.degree.get('W'))
 
-        print(str(theta0) + " " + str(theta1) + " " + str(theta2) + " " + str(theta3))
-        X_axis = Thread(name="X_axis", target=Arm._STEP_CONTROL_, args=(
-            self,"X", theta0 , Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X,), daemon=True)
-        Y_axis = Thread(name="Y_axis", target=Arm._STEP_CONTROL_, args=(
-            self,"Y", theta1, Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y,), daemon=True)
-        Z_axis = Thread(name="Z_axis", target=Arm._STEP_CONTROL_, args=(
-            self,"Z", theta2, Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z,), daemon=True)
-        W_axis = Thread(name="W_axis", target=Arm._SERVO_CONTROL_, args=(
-            self,"W", theta3, Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W,), daemon=True) 
-        Axises = [X_axis, Y_axis, Z_axis, W_axis] 
+            print(str(theta0) + " " + str(theta1) + " " + str(theta2) + " " + str(theta3))
+            X_axis = Thread(name="X_axis", target=Arm._STEP_CONTROL_, args=(
+                self,"X", theta0 , Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X,), daemon=True)
+            Y_axis = Thread(name="Y_axis", target=Arm._STEP_CONTROL_, args=(
+                self,"Y", theta1, Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y,), daemon=True)
+            Z_axis = Thread(name="Z_axis", target=Arm._STEP_CONTROL_, args=(
+                self,"Z", theta2, Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z,), daemon=True)
+            W_axis = Thread(name="W_axis", target=Arm._SERVO_CONTROL_, args=(
+                self,"W", theta3, Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W,), daemon=True) 
+            Axises = [X_axis, Y_axis, Z_axis, W_axis] 
 
-        for axis in Axises :
-            axis.start()
-        for axis in Axises :
-            axis.join()   
-            
+            if num==2:
+                Arm._STEP_CONTROL_(self,"Y", 90-self.degree.get('Y'), Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y,)
+            else :
+                for axis in Axises :
+                    axis.start()
+                for axis in Axises :
+                    axis.join()
+        elif num==1:
+            Arm._SERVO_CONTROL_(self,"W", -15, Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W,)
+            time.sleep(0.5)
+            Arm._SERVO_CONTROL_(self,"W", 5, Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W,)
+
         print("initializing complete! ")
         self.updateCurDegree()
         return
 
-    def _FIN_(self):  # 무슨 각도에 있든지 초기 상태로 돌리는 함수
-        self._STEP_CONTROL_("Y", (90-self.degree.get('Y')), Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y)
-        self._STEP_CONTROL_("Z", (90-self.degree.get('Z')), Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z)
-        self._SERVO_CONTROL_("W", (90-self.degree.get('W')), Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W)
-        self._STEP_CONTROL_("X", (180-self.degree.get('X')), Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X)
+    # def _FIN_(self):  # 무슨 각도에 있든지 초기 상태로 돌리는 함수
+    #     self._STEP_CONTROL_("Y", (90-self.degree.get('Y')), Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y)
+    #     self._STEP_CONTROL_("Z", (90-self.degree.get('Z')), Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z)
+    #     self._SERVO_CONTROL_("W", (90-self.degree.get('W')), Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W)
+    #     self._STEP_CONTROL_("X", (180-self.degree.get('X')), Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X)
 
-        self.updateCurDegree()
+    #     self.updateCurDegree()
 
-        self._STEP_CONTROL_("Z", (self.init_degree.get(
-            'Z')-self.degree.get('Z')), Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z)    
-        self._STEP_CONTROL_("Y", (self.init_degree.get(
-            'Y')-self.degree.get('Y')), Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y)             
-        self._SERVO_CONTROL_("W", (self.init_degree.get(
-            'W')-self.degree.get('W')), Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W)
-        self._STEP_CONTROL_("X", (self.init_degree.get('X')-self.degree.get('X')), Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X)    
+    #     self._STEP_CONTROL_("Z", (self.init_degree.get(
+    #         'Z')-self.degree.get('Z')), Arm.STEPPIN_Z, Arm.DIRPIN_Z, Arm.ENPIN_Z)    
+    #     self._STEP_CONTROL_("Y", (self.init_degree.get(
+    #         'Y')-self.degree.get('Y')), Arm.STEPPIN_Y, Arm.DIRPIN_Y, Arm.ENPIN_Y)             
+    #     self._SERVO_CONTROL_("W", (self.init_degree.get(
+    #         'W')-self.degree.get('W')), Arm.PCA_CHANNEL_W, Arm.MIN_PWM_W, Arm.INTERVAL_W)
+    #     self._STEP_CONTROL_("X", (self.init_degree.get('X')-self.degree.get('X')), Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X)    
 
-        print("complete! ")
-        self.updateCurDegree()
-        return     
+    #     print("complete! ")
+    #     self.updateCurDegree()
+    #     return     
 
     # -180<x<180, 0<y<180, -30<z<90 , 0<w<180, 0<r<180
     def checkAngle(self, degree, AXIS):
@@ -215,6 +221,7 @@ class Arm:
 
         if (AXIS == 'X'):
             STEP_PULSE_LEVEL_TIME = float(self.STEP_PULSE_LEVEL_TIME) / 2
+            
         else:
             STEP_PULSE_LEVEL_TIME = self.STEP_PULSE_LEVEL_TIME
 

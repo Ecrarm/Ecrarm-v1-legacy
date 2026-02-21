@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     Arm._STEP_SETUP_()
     Arm._SERVO_SETUP_() 
-    Arm._INIT_()
+    Arm._INIT_(1)
     Arm.setElectromagnetic()
 
     try:
@@ -30,11 +30,8 @@ if __name__ == "__main__":
                 ##------------------------------------ 좌표 직접 입력 -------------------------------------------------------------
                 print("각도 제한 범위 : -180<theta0<180, 0<theta1<174, -58<theta2<90 , 0<theta3<90, 0<theta4<180, 0<theta5<180 ")
                 cs, x, y = map(float, input("관절 이동각도 입력 (class , x , y) : ").split())
-                
-                x = x*9
-                y = 8 - 16*y
 
-                R, theta0 = CALCUL.changeCoordinate(y,x) 
+                R, theta0 = CALCUL.changeCoordinate(x,y) 
 
                 X_axis = Thread(name="X_axis", target=Arm._STEP_CONTROL_, args=(
                     "X", theta0 , Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X,), daemon=True)
@@ -44,8 +41,6 @@ if __name__ == "__main__":
 
                 height = CALCUL.HEIGHT
                 while(1) :
-                    time.sleep(0.1)
-
                     theta1, theta2, theta3 = CALCUL.calculAngle(R, height)
 
                     theta1 = theta1 - Arm.degree.get('Y')
@@ -67,22 +62,23 @@ if __name__ == "__main__":
 
                     Axises[2].start()
                     Axises[2].join()
-                    time.sleep(0.5)
+                    time.sleep(0.03)
 
                     if CALCUL.CHECK_DIS > CALCUL.detect_distance() : 
                         Arm.getElement()
+                        time.sleep(0.5)
                         break
                     else :
                         height = CALCUL.decreaseDis(height)
 
                     Arm.updateCurDegree()
-                Arm._INIT_()
+                Arm._INIT_(2)
                 iter = iter + 1
             elif iter == 1 :
-                theta0 = 65 - Arm.degree.get("X")
-                theta1 = 50 - Arm.degree.get("Y")
-                theta2 = 40 - Arm.degree.get("Z")
-                theta3 = 15 - Arm.degree.get("W") 
+                theta0 = 45 - Arm.degree.get("X")
+                theta1 = 20 - Arm.degree.get("Y")
+                theta2 = 90 - Arm.degree.get("Z")
+                theta3 = 30 - Arm.degree.get("W") 
 
                 X_axis = Thread(name="X_axis", target=Arm._STEP_CONTROL_, args=(
                     "X", theta0 , Arm.STEPPIN_X, Arm.DIRPIN_X, Arm.ENPIN_X,), daemon=True)
@@ -109,7 +105,8 @@ if __name__ == "__main__":
                 time.sleep(2)
                 Arm.updateCurDegree()
                 iter = iter + 1
-            else :  
+            else :
+                Arm._INIT_(0)  
                 break                                              
             # if iter == 1 :
             #     GPIO.output(Arm.ELCTROMAGNETIC, GPIO.LOW)
